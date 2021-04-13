@@ -217,8 +217,8 @@ def process(arr):
     #np.savetxt('aop_month.csv', a, fmt="%s", delimiter=',',
                #header="vehicleID, year, month, maxLat, minLat, maxLong, minLong, completeMonth")
 
-    a = np.array(dpv_month, dtype=object)
-    np.savetxt('dpv_month.csv', a, fmt="%s", delimiter=',', header="vehicleID, year, month, distance, completeMonth")
+    #a = np.array(dpv_month, dtype=object)
+    #np.savetxt('dpv_month.csv', a, fmt="%s", delimiter=',', header="vehicleID, year, month, distance, completeMonth")
 
     # a = np.array(dpv_day, dtype=object)
     # np.savetxt('dpv_day.csv', a, fmt="%s", delimiter=',', header="vehicleID, year, month, day, distance, totalDistance")
@@ -297,8 +297,9 @@ def favg(arr, arrt):
         for v in type1:
             vid = int(v[0][0])
             for x in arrt:
-                tfr += (vid == int(x[0])) * float(x[3])
-
+                if vid == int(x[0]):
+                    tfr += float(x[3])
+                    break
         te.append(tfr / len(type1))
     print(te)
     return te
@@ -312,6 +313,8 @@ A = []
 # from favg, plaintext to not have to constantly recompute
 avgs = [49.803257402237556, 49.827196974814505, 49.79350392937023,
         49.822661770372804, 49.827491765690155, 49.821742796296476]
+
+# avgs = favg(arr2, frpv_total_arr)
 print("yo")
 
 
