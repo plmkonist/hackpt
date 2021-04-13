@@ -3,9 +3,9 @@ import csv
 import pyrebase
 import numpy as np
 from scipy.stats import ttest_1samp
-#import pandas as pd
-#from sklearn.cluster import Birch
-#import matplotlib.pyplot as plt
+# import pandas as pd
+# from sklearn.cluster import Birch
+# import matplotlib.pyplot as plt
 import geopy.distance
 
 
@@ -105,136 +105,139 @@ def process(arr):
     dpv_total = []
     # parse data, find new variables
     i = 0
-    for x in arr:
-        for vehicle in x:
-            cur_day = (-1, -1)
-            prev_day = (-1, -1)
-            cur_month = 0
-            total_distance = 0.0
-            total_hours = 0.0
-            hours_300 = 0.0
-            hours_150 = 0.0
-            fuel_300 = 0.0
-            fuel_150 = 0.0
-            total_fuel = 0.0
-            j = 0
+    for vehicle in arr:
+        cur_day = (-1, -1)
+        prev_day = (-1, -1)
+        cur_month = 0
+        total_distance = 0.0
+        total_hours = 0.0
+        hours_300 = 0.0
+        hours_150 = 0.0
+        fuel_300 = 0.0
+        fuel_150 = 0.0
+        total_fuel = 0.0
+        count_300 = 0
+        count_150 = 0
 
-            count_300 = 0
-            count_150 = 0
+        maxN = -10000
+        maxS = 10000
+        maxE = -10000
+        maxW = 10000
+        # count_month = 0
+        hours_month = 0
+        fuel_month = 0
 
-            maxN = -10000
-            maxS = 10000
-            maxE = -10000
-            maxW = 10000
-            count_month = 0
-            hours_month = 0
-            fuel_month = 0
-            for day in vehicle:
-                t = str(day[1])
-                t = t.split("-")
-                fuel_300 += float(day[4])
-                fuel_150 += float(day[4])
-                hours_300 += float(day[3])
-                hours_150 += float(day[3])
-                total_fuel += float(day[4])
-                total_hours += float(day[3])
-                if cur_month != int(t[1]):
-                    if cur_month != 0:
-                        complete_month = int(t[2]) == 1
-                        aop_month.append(list((day[0], t[0], t[1], maxN, maxS, maxE, maxW, complete_month)))
-                        dpv_month.append(list((day[0], t[0], t[1], distance_month, complete_month)))
-                        frpv_month.append(
-                            list((day[0], t[0], t[1], fuel_month / hours_month, fuel_month, hours_month,
-                                  lat, long, complete_month)))
-                    cur_month = int(t[1])
+        complete_month = False
+        date = []
+        for day in vehicle:
+            t = str(day[1])
+            date = t.split("-")
+            fuel_300 += float(day[4])
+            fuel_150 += float(day[4])
+            hours_300 += float(day[3])
+            hours_150 += float(day[3])
+            total_fuel += float(day[4])
+            total_hours += float(day[3])
+            if cur_month != int(date[1]):
+                if cur_month == 0:
+                    cur_month = int(date[1])
                     distance_month = 0
                     fuel_month = 0
                     hours_month = 0
-                    count_month += 1
-                hours_month += float(day[3])
-                fuel_month += float(day[4])
-                if hours_300 >= 300:
-                    #frpv_300.append(list((day[0], t[0], t[1], t[2], fuel_300 / hours_300, fuel_300, hours_300, True)))
-                    fuel_300 = 0.0
-                    count_300 += 1
-                    hours_300 = 0
-                if hours_150 >= 150:
-                    #frpv_150.append(list((day[0], t[0], t[1], t[2], fuel_150 / hours_150, fuel_150, hours_150, True)))
-                    fuel_150 = 0.0
-                    count_150 += 1
-                    hours_150 = 0
+                    complete_month = date[2] == 1
+                else:
+                    # aop_month.append(list((day[0], date[0], cur_month, maxN, maxS, maxE, maxW, complete_month)))
+                    # dpv_month.append(list((day[0], date[0], cur_month, distance_month, complete_month)))
+                    frpv_month.append(
+                        list((day[0], date[0], cur_month, fuel_month / hours_month, fuel_month, hours_month,
+                              lat, long, complete_month)))
+                    cur_month = int(date[1])
+                    distance_month = 0
+                    fuel_month = 0
+                    hours_month = 0
+                    complete_month = True
+                # count_month += 1
+            hours_month += float(day[3])
+            fuel_month += float(day[4])
+            # if hours_300 >= 300:
+            # frpv_300.append(list((day[0], date[0], date[1], date[2], fuel_300 / hours_300, fuel_300, hours_300, True)))
+            # fuel_300 = 0.0
+            # count_300 += 1
+            # hours_300 = 0
+            # if hours_150 >= 150:
+            # frpv_150.append(list((day[0], date[0], date[1], date[2], fuel_150 / hours_150, fuel_150, hours_150, True)))
+            # fuel_150 = 0.0
+            # count_150 += 1
+            # hours_150 = 0
 
-                if maxN < float(day[6]):
-                    maxN = float(day[6])
-                if maxS > float(day[6]):
-                    maxS = float(day[6])
-                if maxE < float(day[7]):
-                    maxE = float(day[7])
-                if maxW > float(day[7]):
-                    maxW = float(day[7])
+            # if maxN < float(day[6]):
+            #    maxN = float(day[6])
+            # if maxS > float(day[6]):
+            #    maxS = float(day[6])
+            # if maxE < float(day[7]):
+            #    maxE = float(day[7])
+            # if maxW > float(day[7]):
+            #    maxW = float(day[7])
 
-                prev_day = cur_day
-                cur_day = (float(day[6]), float(day[7]))
-                distance = 0
-                if prev_day != (-1, -1):
-                    distance = geopy.distance.distance(cur_day, prev_day).km
-                total_distance += distance
-                #dpv_day.append(list((day[0], t[0], t[1], t[2], distance, total_distance)))
-                #frpv_day.append(
-                    #list((day[0], t[0], t[1], t[2], float(day[4]) / float(day[3]), float(day[4]), float(day[3]),
-                          #total_fuel, total_hours)))
-                distance_month += distance
-                lat = day[6]
-                long = day[7]
-                j += 1
+            prev_day = cur_day
+            cur_day = (float(day[6]), float(day[7]))
+            distance = geopy.distance.distance(cur_day, prev_day).km * (prev_day != (-1, -1))
+            total_distance += distance
+            # dpv_day.append(list((day[0], date[0], date[1], date[2], distance, total_distance)))
+            # frpv_day.append(
+            # list((day[0], date[0], date[1], date[2], float(day[4]) / float(day[3]), float(day[4]), float(day[3]),
+            # total_fuel, total_hours)))
+            distance_month += distance
+            lat = day[6]
+            long = day[7]
+        # aop_month.append(list((day[0], date[0], date[1], maxN, maxS, maxE, maxW, date[2] == 31 or date[2] == 30)))
+        # dpv_month.append(list((day[0], date[0], date[1], distance_month, date[2] == 31 or date[2] == 30)))
+        frpv_month.append(
+            list((day[0], date[0], date[1], fuel_month / hours_month, fuel_month, hours_month,
+                  lat, long, date[2] == 31 or date[2] == 30)))
+        # aop_total.append(list((day[0], maxN, maxS, maxE, maxW)))
+        # dpv_total.append(list((day[0], total_distance, lat, long)))
+        frpv_total.append(list((day[0], total_hours, total_fuel, total_fuel / total_hours)))
+        # if hours_150 > 0:
+        # frpv_150.append(list((day[0], date[0], date[1], date[2], fuel_150 / hours_150, fuel_150, hours_150, False)))
+        # if hours_300 > 0:
+        # frpv_300.append(list((day[0], date[0], date[1], date[2], fuel_300 / hours_300, fuel_300, hours_300, False)))
+        i += 1
 
-            aop_month[i].append(list((day[0], t[0], t[1], maxN, maxS, maxE, maxW, False)))
-            dpv_month[i].append(list((day[0], t[0], t[1], distance_month, False)))
-            frpv_month[i].append(list((day[0], t[0], t[1], fuel_month / hours_month,
-                                       fuel_month, hours_month, lat, long, False)))
-            #aop_total.append(list((day[0], maxN, maxS, maxE, maxW)))
-            #dpv_total.append(list((day[0], total_distance, lat, long)))
-            #frpv_total.append(list((day[0], total_hours, total_fuel, total_fuel / total_hours)))
-            #if hours_150 > 0:
-                #frpv_150.append(list((day[0], t[0], t[1], t[2], fuel_150 / hours_150, fuel_150, hours_150, False)))
-            #if hours_300 > 0:
-                #frpv_300.append(list((day[0], t[0], t[1], t[2], fuel_300 / hours_300, fuel_300, hours_300, False)))
-            i += 1
+    # a = np.array(aop_total, dtype=object)
+    # np.savetxt('aop_total.csv', a, fmt="%s", delimiter=',', header="vehicleID, maxLat, minLat, maxLong, minLong")
 
-    #a = np.array(aop_total, dtype=object)
-    #np.savetxt('aop_total.csv', a, fmt="%s", delimiter=',', header="vehicleID, maxLat, minLat, maxLong, minLong")
+    # a = np.array(dpv_total, dtype=object)
+    # np.savetxt('dpv_total.csv', a, fmt="%s", delimiter=',', header="vehicleID, total_distance, lat, long")
 
-    #a = np.array(dpv_total, dtype=object)
-    #np.savetxt('dpv_total.csv', a, fmt="%s", delimiter=',', header="vehicleID, total_distance, lat, long")
+    a = np.array(frpv_total, dtype=object)
+    np.savetxt('frpv_total.csv', a, fmt="%s", delimiter=',', header="vehicleID, total_hours, total_fuel, fuel / hours")
 
-    #a = np.array(frpv_total, dtype=object)
-    #np.savetxt('frpv_total.csv', a, fmt="%s", delimiter=',', header="vehicleID, total_hours, total_fuel, fuel / hours")
-
-    a = np.array(aop_month, dtype=object)
-    np.savetxt('aop_month.csv', a, fmt="%s", delimiter=',',
-               header="vehicleID, year, month, maxLat, minLat, maxLong, minLong, completeMonth")
+    #a = np.array(aop_month, dtype=object)
+    #np.savetxt('aop_month.csv', a, fmt="%s", delimiter=',',
+               #header="vehicleID, year, month, maxLat, minLat, maxLong, minLong, completeMonth")
 
     a = np.array(dpv_month, dtype=object)
     np.savetxt('dpv_month.csv', a, fmt="%s", delimiter=',', header="vehicleID, year, month, distance, completeMonth")
 
-    #a = np.array(dpv_day, dtype=object)
-    #np.savetxt('dpv_day.csv', a, fmt="%s", delimiter=',', header="vehicleID, year, month, day, distance, totalDistance")
+    # a = np.array(dpv_day, dtype=object)
+    # np.savetxt('dpv_day.csv', a, fmt="%s", delimiter=',', header="vehicleID, year, month, day, distance, totalDistance")
 
-    #a = np.array(frpv_150, dtype=object)
-    #np.savetxt('frpv_150.csv', a, fmt="%s", delimiter=',',
-               #header="vehicleID, year, month, day, fuel / hours, fuel, hours, hours>=150")
+    # a = np.array(frpv_150, dtype=object)
+    # np.savetxt('frpv_150.csv', a, fmt="%s", delimiter=',',
+    # header="vehicleID, year, month, day, fuel / hours, fuel, hours, hours>=150")
 
-    #a = np.array(frpv_300, dtype=object)
-    #np.savetxt('frpv_300.csv', a, fmt="%s", delimiter=',',
-               #header="vehicleID, year, month, day, fuel / hours, fuel, hours, hours>=300")
+    # a = np.array(frpv_300, dtype=object)
+    # np.savetxt('frpv_300.csv', a, fmt="%s", delimiter=',',
+    # header="vehicleID, year, month, day, fuel / hours, fuel, hours, hours>=300")
 
     a = np.array(frpv_month, dtype=object)
     np.savetxt('frpv_month.csv', a, fmt="%s", delimiter=',',
-               header="vehicleID, year, month, fuel / hours,  fuel, hours, completeMonth")
+               header="vehicleID, year, month, fuel / hours,  fuel, hours, lat, long, completeMonth")
 
-    #a = np.array(frpv_day, dtype=object)
-    #np.savetxt('frpv_day.csv', a, fmt="%s", delimiter=',',
-               #header="vehicleID, year, month, day, fuel / hours, fuel, hours, totalFuel, totalHours")
+    # a = np.array(frpv_day, dtype=object)
+    # np.savetxt('frpv_day.csv', a, fmt="%s", delimiter=',',
+    # header="vehicleID, year, month, day, fuel / hours, fuel, hours, totalFuel, totalHours")
 
 
 firebaseConfig = {
@@ -249,7 +252,7 @@ firebaseConfig = {
 }
 arr1, arr2, veh_types = grab()
 print(veh_types)
-process(arr2)
+process(arr1)
 print("OPA")
 filename1 = "aop_month.csv"
 filename2 = "aop_total.csv"
@@ -262,15 +265,15 @@ filename8 = "frpv_day.csv"
 filename9 = "frpv_month.csv"
 filename10 = "frpv_total.csv"
 
-#aop_month_arr = np.genfromtxt(filename1, delimiter=',', dtype=None)
-#aop_total_arr = np.genfromtxt(filename2, delimiter=',', dtype=None)
+# aop_month_arr = np.genfromtxt(filename1, delimiter=',', dtype=None)
+# aop_total_arr = np.genfromtxt(filename2, delimiter=',', dtype=None)
 # dpv_day_arr = np.genfromtxt(filename3, delimiter=',', dtype=None)
-#dpv_month_arr = np.genfromtxt(filename4, delimiter=',', dtype=None)
-#dpv_total_arr = np.genfromtxt(filename5, delimiter=',', dtype=None)
-#frpv_150_arr = np.genfromtxt(filename6, delimiter=',', dtype=None)
-#frpv_300_arr = np.genfromtxt(filename7, delimiter=',', dtype=None)
+# dpv_month_arr = np.genfromtxt(filename4, delimiter=',', dtype=None)
+# dpv_total_arr = np.genfromtxt(filename5, delimiter=',', dtype=None)
+# frpv_150_arr = np.genfromtxt(filename6, delimiter=',', dtype=None)
+# frpv_300_arr = np.genfromtxt(filename7, delimiter=',', dtype=None)
 print("hello")
-#frpv_day_arr = np.genfromtxt(filename8, delimiter=',', dtype=None)
+# frpv_day_arr = np.genfromtxt(filename8, delimiter=',', dtype=None)
 frpv_month_arr = np.genfromtxt(filename9, delimiter=',', dtype=None)
 frpv_total_arr = np.genfromtxt(filename10, delimiter=',', dtype=None)
 
@@ -311,6 +314,7 @@ avgs = [49.803257402237556, 49.827196974814505, 49.79350392937023,
         49.822661770372804, 49.827491765690155, 49.821742796296476]
 print("yo")
 
+
 def month_fhr():
     i = 0
     while i < 240000:
@@ -320,25 +324,26 @@ def month_fhr():
         while frpv_month_arr[i][0] == tempID:
             temp_arr.append(float(frpv_month_arr[i][3]))
             i += 1
-            if (i == 240000):
+            if i == 240000:
                 break
         tset, pval = ttest_1samp(temp_arr, avgs[x])
-        if pval < 0.05:    # alpha value is 0.05 or 5%
-             A.append(list((frpv_month_arr[i - 1][0], frpv_month_arr[i - 1][1], frpv_month_arr[i - 1][2],
-                            frpv_month_arr[i - 1][3], "0", "0")))
-            #data = {"vehicle_id": str(frpv_month_arr[i - 1][0]),
-            #"year": str(frpv_month_arr[i - 1][1]),
-            #"month": str(frpv_month_arr[i - 1][2]),
-            #"lat": "0",
-            #"long": "0"}
-            #db.child("maint").child(str(frpv_month_arr[i - 1][0])).set(data)
-
+        if pval < 0.05:  # alpha value is 0.05 or 5%
+            A.append(list((frpv_month_arr[i - 1][0], frpv_month_arr[i - 1][1], frpv_month_arr[i - 1][2],
+                           frpv_month_arr[i - 1][3], "0", "0")))
+            print(temp_arr)
+            # data = {"vehicle_id": str(frpv_month_arr[i - 1][0]),
+            # "year": str(frpv_month_arr[i - 1][1]),
+            # "month": str(frpv_month_arr[i - 1][2]),
+            # "lat": "0",
+            # "long": "0"}
+            # db.child("maint").child(str(frpv_month_arr[i - 1][0])).set(data)
 
     B = np.array(A, dtype=object)
     np.savetxt('over_under_use.csv', B, fmt="%s", delimiter=',',
-                header="vehicleID, year, month, fuel / hours, lat, long")
+               header="vehicleID, year, month, fuel / hours, lat, long")
 
 
+month_fhr()
 # geopy.distance.distance(coords_1, coords_2).km
 # n = 22
 # plt.xlabel("Year")
