@@ -1,3 +1,5 @@
+Full project at https://devpost.com/software/trackify-gsal28
+
 Key:    
     
     aop = Area of operation. For each vehicle, found the furthest Northern, Easter, Southern, and Western lat/lng coordinates. Stored monthly and total furthest points.
